@@ -1,5 +1,4 @@
-﻿
-namespace Chinook.Report.Marketing.Models
+﻿namespace Chinook.Report.Marketing.Models
 {
 	internal class ArtistStatistic : Contracts.Report.Marketing.IArtistStatistic
 	{

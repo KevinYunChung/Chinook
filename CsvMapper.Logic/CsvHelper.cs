@@ -5,12 +5,14 @@ using System.Reflection;
 using System.Text;
 using System.IO;
 using CsvMapper.Logic.Attributes;
+using System.Text.RegularExpressions;
 
 namespace CsvMapper.Logic
 {
 	public class CsvHelper
 	{
 		private static string NullLabel => "<NULL>";
+
 		public static void Write(IEnumerable<object> models)
 		{
 			if (models == null)
@@ -28,9 +30,9 @@ namespace CsvMapper.Logic
 					foreach (var item in models)
 					{
 						var line = CreateCsvLine(item, metaData.Separator);
-
 						lines.Add(line);
 					}
+
 					File.WriteAllLines(metaData.FileName, lines, Encoding.Default);
 				}
 			}
@@ -47,10 +49,9 @@ namespace CsvMapper.Logic
 								.Skip(metaData.HasHeader ? 1 : 0);
 
 				foreach (var line in lines)
-				{
 					result.Add(ReadCsvLine<T>(line, metaData.Separator));
-				}
 			}
+
 			return result;
 		}
 
@@ -62,7 +63,12 @@ namespace CsvMapper.Logic
 
 			var result = new T();
 			var type = typeof(T);
-			var data = line.Split(new [] { separator }, StringSplitOptions.None);
+
+			// regex matches all ; outside of "
+			Regex reg = new Regex(";(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");
+			var data = reg.Split(line);
+			//var data = line.Split(new [] { separator }, StringSplitOptions.None);
+
 			var impProps = type.GetProperties()
 							   .Where(p =>
 							   {
@@ -81,18 +87,16 @@ namespace CsvMapper.Logic
 
 					return a.OrderPosition == i;
 				});
+
 				if (item != null)
 				{
 					if (value == NullLabel)
-					{
 						item.SetValue(result, null);
-					}
 					else
-					{
 						item.SetValue(result, Convert.ChangeType(value, item.PropertyType));
-					}
 				}
 			}
+
 			return result;
 		}
 
